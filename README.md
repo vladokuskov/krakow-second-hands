@@ -1,8 +1,10 @@
 # Kraków Second Hands
 
-Map of every second hand, lumpeks, vintage, charity shop and flea market in Kraków (128 places, from Google Maps, October 2026).
+Map of every second hand, lumpeks, vintage, charity shop and flea market in Kraków (124 places, from Google Maps, October 2026).
 
-Plain static site, no build step: `index.html`, `app.js`, `styles.css`, `data/shops.json`.
+Features: clustered map, open-now status and weekly hours (Kraków time), delivery-day notes from reviews plus your own per-shop delivery day, saved shops, a thrift route planner that opens in Google Maps, shareable links (`/?shop=<place_id>`, `/?route=<id>,<id>`), PL/EN, light/dark map that follows the system.
+
+Plain static site, no build step: `index.html`, `app.js`, `hours.js`, `i18n.js`, `styles.css`, `data/shops.json`. Saved shops, route and delivery days live in the browser's localStorage.
 
 ## Run locally
 
@@ -10,19 +12,20 @@ Plain static site, no build step: `index.html`, `app.js`, `styles.css`, `data/sh
 
 ## Deploy to Vercel
 
-    npx vercel          # preview deploy (first run asks to log in and link a project)
-    npx vercel --prod   # production
+Import the repo at vercel.com/new (framework preset "Other", no build command). Every push to `main` redeploys.
 
-Or push this folder to GitHub and import it at vercel.com/new. Framework preset: "Other", no build command, output directory = root.
+## Data
 
-## Updating the data
+`data/shops.json` entries:
 
-Edit `data/shops.json`. Each entry:
+    { name, place_id, address, lat, lng, rating, total_ratings, cat,
+      hours,      // 7 lists (Mon..Sun) of [startMin, endMin], end may pass 1440; null = unknown
+      website, phone, cards, delivery, note }
 
-    { "name", "place_id", "address", "lat", "lng", "rating", "total_ratings", "cat" }
+`cat` is one of `lump`, `sh`, `vin`, `char`, `flea`. `delivery` and `note` are summaries of Google reviews.
 
-`cat` is one of `lump`, `sh`, `vin`, `char`, `flea`.
+Refresh hours, ratings and closures from the Places API (needs a key with Places API (New) enabled; about 124 requests):
 
-`artifact/` holds the single-file version published as a claude.ai artifact and is excluded from deploys via `.vercelignore`.
+    GOOGLE_MAPS_API_KEY=... node scripts/refresh.mjs
 
-Map tiles: © OpenStreetMap contributors (fine for a low-traffic personal site; switch to MapTiler/Stadia with a key if it gets real traffic).
+Map: © OpenFreeMap, © OpenStreetMap contributors.
