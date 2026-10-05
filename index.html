@@ -6,6 +6,14 @@
   <title>Kraków Second Hands</title>
   <meta name="description" content="Every second hand, lumpeks, vintage, charity shop and flea market in Kraków on one map, with opening hours and a thrift route planner.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='%23c2410c'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#181c27" media="(prefers-color-scheme: dark)">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Second Hands">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
@@ -29,7 +37,8 @@
           <button id="filtersBtn" class="ghost filters-btn" type="button" aria-expanded="false" aria-controls="filters" data-i18n="filters"></button>
         </div>
         <div id="filters" class="filters">
-          <div class="chips" id="chips"></div>
+          <div class="chips scroll" id="chips"></div>
+          <div class="chips scroll" id="tagchips"></div>
           <div class="chips" id="toggles"></div>
           <div class="row">
             <label for="sort" data-i18n="sort"></label>
@@ -40,6 +49,7 @@
         </div>
         <div class="row">
           <button id="near" class="ghost" type="button" data-i18n="nearMe"></button>
+          <span id="offlinePill" class="offline-pill" data-i18n="offline" hidden></span>
           <span class="msg" id="msg" hidden></span>
           <span class="count" id="count"></span>
         </div>
@@ -58,7 +68,13 @@
           <button id="routeClear" class="link" type="button" data-i18n="clear"></button>
         </div>
       </section>
-      <footer data-i18n="footer"></footer>
+      <footer>
+        <div class="tools">
+          <button id="installBtn" class="ghost" type="button" hidden></button>
+          <button id="saveMapBtn" class="ghost" type="button"></button>
+        </div>
+        <p class="credits" data-i18n="footer"></p>
+      </footer>
     </aside>
     <div id="map"></div>
   </div>
@@ -71,5 +87,6 @@
   <script src="/i18n.js"></script>
   <script src="/hours.js"></script>
   <script src="/app.js"></script>
+  <script src="/offline.js"></script>
 </body>
 </html>

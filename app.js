@@ -23,6 +23,7 @@ const store = {
 let lang = store.get("lang", navigator.language?.toLowerCase().startsWith("pl") ? "pl" : "en");
 const on = Object.fromEntries(Object.keys(CAT_VARS).map(k => [k, true]));
 let openOnly = false, savedOnly = false;
+const wantTags = new Set();
 const saved = new Set(store.get("saved", []));
 let route = store.get("route", []);
 let mode = store.get("mode", "walking");
@@ -32,6 +33,8 @@ let SHOPS = [], byId = {}, markers = {}, active = null, me = null, meMarker = nu
 const T = () => STRINGS[lang];
 const t = (k, vars = {}) => String(T()[k] ?? k).replace(/\{(\w+)\}/g, (_, v) => vars[v]);
 const catLabel = c => T().cats[c][0];
+const TAGS = ["byweight", "men", "kids", "shoes", "home", "designer", "books"];
+const tagLabel = k => T().tags[k];
 const reviewsText = n => {
   if (lang === "pl") return `${n} ${n === 1 ? "opinia" : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? "opinie" : "opinii"}`;
   return `${n} ${n === 1 ? "review" : "reviews"}`;
@@ -154,6 +157,7 @@ function applyLang() {
   render();
   renderRoute();
   if (active) markers[active].getPopup()?.setContent(popupEl(byId[active]));
+  if (typeof updateOfflineUI === "function") updateOfflineUI();
 }
 
 function fillSelect(sel, opts) {
@@ -182,10 +186,16 @@ function buildChips() {
     const n = SHOPS.filter(s => s.cat === k).length;
     if (n) chips.appendChild(chip(catLabel(k), n, on[k], () => { on[k] = !on[k]; buildChips(); render(); }, { dot: CAT_VARS[k], title: T().cats[k][1] }));
   });
+  const tagchips = $("tagchips");
+  tagchips.innerHTML = "";
+  TAGS.forEach(k => {
+    const n = SHOPS.filter(s => s.tags?.includes(k)).length;
+    if (n) tagchips.appendChild(chip(tagLabel(k), n, wantTags.has(k), () => { wantTags.has(k) ? wantTags.delete(k) : wantTags.add(k); buildChips(); render(); }));
+  });
   const openCount = SHOPS.filter(s => hoursStatus(s.hours)?.open).length;
   toggles.appendChild(chip(t("openNow"), openCount, openOnly, () => { openOnly = !openOnly; buildChips(); render(); }, { dot: "--ok" }));
   toggles.appendChild(chip("♥ " + t("saved"), saved.size, savedOnly, () => { savedOnly = !savedOnly; buildChips(); render(); }, { disabled: !saved.size && !savedOnly }));
-  const changed = Object.values(on).some(v => !v) || openOnly || savedOnly || $("minr").value !== "0";
+  const changed = Object.values(on).some(v => !v) || openOnly || savedOnly || wantTags.size > 0 || $("minr").value !== "0";
   $("filtersBtn").classList.toggle("dot", changed);
 }
 
@@ -216,6 +226,7 @@ function render() {
     .filter(s => on[s.cat] && (s.rating || 0) >= min
       && (!openOnly || hoursStatus(s.hours)?.open)
       && (!savedOnly || saved.has(s.place_id))
+      && [...wantTags].every(k => s.tags?.includes(k))
       && (!q || (s.name + " " + s.address).toLowerCase().includes(q)))
     .map(s => ({ s, d: me ? km(me, s) : null }));
   const by = {
@@ -246,7 +257,8 @@ function render() {
     li.innerHTML = `<button type="button" class="main"><i></i>
         <div class="txt"><div class="nm">${saved.has(s.place_id) ? '<span class="heart" aria-label="saved">♥</span> ' : ""}${esc(s.name)}</div>
         <div class="ad">${esc(short(s.address))}</div>
-        <div class="meta">${statusHtml(s, false)}${deliveryToday(s) ? ` <span class="pill">${t("deliveryToday")}</span>` : ""}</div></div>
+        <div class="meta">${statusHtml(s, false)}${deliveryToday(s) ? ` <span class="pill">${t("deliveryToday")}</span>` : ""}</div>
+        ${s.tags?.length ? `<div class="tags">${s.tags.map(k => `<span class="tag-s${wantTags.has(k) ? " hit" : ""}">${tagLabel(k)}</span>`).join("")}</div>` : ""}</div>
         <div class="rt">${s.rating ? `<span class="s">★</span> ${s.rating.toFixed(1)}` : ""}<small>${d != null ? `<span class="km">${fmtKm(d)}</span>` : s.rating ? s.total_ratings : ""}</small></div>
       </button>
       <button type="button" class="add" aria-pressed="${inRoute}" title="${inRoute ? t("inRoute") : t("addRoute")}" aria-label="${inRoute ? t("inRoute") : t("addRoute")}">${inRoute ? route.indexOf(s.place_id) + 1 : "+"}</button>`;
@@ -275,6 +287,7 @@ function popupEl(s) {
     <div class="addr">${esc(short(s.address))}</div>
     <div class="pmeta">${meta.join(" · ")}</div>
     <div class="pstatus">${statusHtml(s, true)}</div>
+    ${s.tags?.length ? `<div class="tags">${s.tags.map(k => `<span class="tag-s">${tagLabel(k)}</span>`).join("")}</div>` : ""}
     ${s.hours && !is24(s.hours) ? `<details><summary>${t("hoursWeek")}</summary><table>${week}</table></details>` : ""}
     ${s.note ? `<p class="note">${esc(s.note)}</p>` : ""}
     ${s.delivery ? `<p class="deliv"><b>${t("deliveryReviews")}:</b> ${esc(s.delivery)}</p>` : ""}
@@ -422,10 +435,10 @@ function copy(text) {
   navigator.clipboard?.writeText(text).then(done, () => toast(t("copyFail"))) ?? toast(t("copyFail"));
 }
 let toastTimer;
-function toast(text) {
+function toast(text, ms = 2200) {
   const el = $("toast");
   el.textContent = text;
   el.hidden = false;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.hidden = true, 2200);
+  toastTimer = setTimeout(() => el.hidden = true, ms);
 }
