@@ -13,7 +13,6 @@
   --c-flea: #0e7490;
   --c-me: #0284c7;
   --star: #b7791f;
-  --tiles: none;
   --display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
   --body: "Figtree", "Segoe UI", system-ui, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -24,7 +23,6 @@
     --accent: #8ea8f0; --accent-soft: #232c45;
     --c-lump: #fb8c4c; --c-sh: #8ea8f0; --c-vin: #d08cf0; --c-char: #4ade80; --c-flea: #22c3e0; --c-me: #38bdf8;
     --star: #f2c14e;
-    --tiles: invert(1) hue-rotate(180deg) brightness(.9) contrast(.88) saturate(.5);
     color-scheme: dark;
   }
 }
@@ -65,7 +63,6 @@ li i { width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; backgroun
 .empty { padding: 24px 18px; color: var(--muted); }
 
 #map { height: 100%; background: var(--bg); }
-.leaflet-tile-pane { filter: var(--tiles); }
 .pin { width: 14px; height: 14px; border-radius: 50%; background: var(--dot); border: 2px solid var(--panel); box-shadow: 0 1px 3px rgba(0,0,0,.35); box-sizing: border-box; transition: transform .15s; }
 .pin.on { transform: scale(1.6); }
 .me { width: 16px; height: 16px; border-radius: 50%; background: var(--c-me); border: 3px solid #fff; box-shadow: 0 0 0 6px color-mix(in srgb, var(--c-me) 25%, transparent); box-sizing: border-box; }

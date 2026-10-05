@@ -20,10 +20,18 @@ const km = (a, b) => {
 const fmtKm = d => d < 1 ? Math.round(d * 1000) + " m" : d.toFixed(1) + " km";
 
 const map = L.map("map", { minZoom: 11, maxZoom: 19 }).setView([50.0614, 19.9366], 12);
-L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 19,
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors · places: Google Maps',
+// Minimal basemap: OpenFreeMap Positron/Dark with rail, shields, airports and boundaries stripped out
+const HIDE = /^(railway|aeroway|airport|boundary|highway-shield|road_shield|highway-name-path|highway_path|label_country|label_state)/;
+const dark = matchMedia("(prefers-color-scheme: dark)");
+const basemap = L.maplibreGL({
+  style: `https://tiles.openfreemap.org/styles/${dark.matches ? "dark" : "positron"}`,
+  attribution: '<a href="https://openfreemap.org" target="_blank">OpenFreeMap</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> · places: Google Maps',
 }).addTo(map);
+const gl = basemap.getMaplibreMap();
+gl.on("styledata", () => gl.getStyle().layers.forEach(l => {
+  if (HIDE.test(l.id) && l.layout?.visibility !== "none") gl.setLayoutProperty(l.id, "visibility", "none");
+}));
+dark.addEventListener("change", e => gl.setStyle(`https://tiles.openfreemap.org/styles/${e.matches ? "dark" : "positron"}`));
 
 let SHOPS = [], markers = {}, active = null, me = null, meMarker = null;
 
