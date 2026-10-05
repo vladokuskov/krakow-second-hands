@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Kraków Second Hands</title>
+  <meta name="description" content="Every second hand, lumpeks, vintage, charity shop and flea market in Kraków on one map.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='%23c2410c'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <header>
+        <div>
+          <h1>Kraków <span>second hands</span></h1>
+          <p class="sub">Lumpeksy, thrift and vintage shops from Google Maps, searched in Polish and English across all 18 districts.</p>
+        </div>
+        <input id="q" class="search" type="search" placeholder="Search name or street" aria-label="Search shops">
+        <div class="chips" id="chips"></div>
+        <div class="row">
+          <label for="sort">Sort</label>
+          <select id="sort">
+            <option value="reviews">Most reviewed</option>
+            <option value="rating">Highest rated</option>
+            <option value="near" disabled>Nearest</option>
+            <option value="name">Name A–Z</option>
+          </select>
+          <label for="minr">Min</label>
+          <select id="minr">
+            <option value="0">Any rating</option>
+            <option value="4">4.0+</option>
+            <option value="4.5">4.5+</option>
+          </select>
+          <button id="near" class="near" type="button">Near me</button>
+          <span class="count" id="count"></span>
+        </div>
+        <p class="msg" id="msg" hidden></p>
+      </header>
+      <ol id="list"><li class="empty">Loading shops…</li></ol>
+    </aside>
+    <div id="map"></div>
+  </div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="/app.js"></script>
+</body>
+</html>
