@@ -20,18 +20,41 @@ const km = (a, b) => {
 const fmtKm = d => d < 1 ? Math.round(d * 1000) + " m" : d.toFixed(1) + " km";
 
 const map = L.map("map", { minZoom: 11, maxZoom: 19 }).setView([50.0614, 19.9366], 12);
-// Minimal basemap: OpenFreeMap Positron/Dark with rail, shields, airports and boundaries stripped out
-const HIDE = /^(railway|aeroway|airport|boundary|highway-shield|road_shield|highway-name-path|highway_path|label_country|label_state)/;
+// Minimal basemap: OpenFreeMap Positron (light) or Dark, following the system theme.
+// Rail, shields, airports and boundaries are hidden; the dark style is repainted in the panel's navy.
+const HIDE = /^(railway|aeroway|airport|boundary|highway-shield|road_shield|road_oneway|highway-name-path|highway_path|highway_name_motorway|label_country|label_state|place_state|place_country)/;
+const DARK_PAINT = {
+  background: { "background-color": "#141824" },
+  landuse_residential: { "fill-color": "#171c29" },
+  landcover_wood: { "fill-color": "#172420" },
+  landuse_park: { "fill-color": "#172420" },
+  water: { "fill-color": "#1e3052" },
+  waterway: { "line-color": "#1e3052" },
+  building: { "fill-color": "#1a1f2d", "fill-outline-color": "#202637" },
+  highway_minor: { "line-color": "#202637" },
+  highway_major_casing: { "line-color": "#2c3447" },
+  highway_major_inner: { "line-color": "#232a3b" },
+  highway_major_subtle: { "line-color": "#283043" },
+  highway_motorway_casing: { "line-color": "#3a4360" },
+  highway_motorway_inner: { "line-color": "#2c3449" },
+  highway_motorway_subtle: { "line-color": "#283043" },
+  water_name: { "text-color": "#5a74a8", "text-halo-color": "#141824" },
+  highway_name_other: { "text-color": "#6c7489", "text-halo-color": "#141824" },
+  ...Object.fromEntries(["place_other", "place_suburb", "place_village", "place_town", "place_city", "place_city_large"]
+    .map(id => [id, { "text-color": "#8a92a8", "text-halo-color": "#141824" }])),
+};
 const dark = matchMedia("(prefers-color-scheme: dark)");
+const styleUrl = isDark => `https://tiles.openfreemap.org/styles/${isDark ? "dark" : "positron"}`;
 const basemap = L.maplibreGL({
-  style: `https://tiles.openfreemap.org/styles/${dark.matches ? "dark" : "positron"}`,
+  style: styleUrl(dark.matches),
   attribution: '<a href="https://openfreemap.org" target="_blank">OpenFreeMap</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> · places: Google Maps',
 }).addTo(map);
 const gl = basemap.getMaplibreMap();
-gl.on("styledata", () => gl.getStyle().layers.forEach(l => {
-  if (HIDE.test(l.id) && l.layout?.visibility !== "none") gl.setLayoutProperty(l.id, "visibility", "none");
+gl.on("style.load", () => gl.getStyle().layers.forEach(l => {
+  if (HIDE.test(l.id)) return gl.setLayoutProperty(l.id, "visibility", "none");
+  if (dark.matches && DARK_PAINT[l.id]) Object.entries(DARK_PAINT[l.id]).forEach(([k, v]) => gl.setPaintProperty(l.id, k, v));
 }));
-dark.addEventListener("change", e => gl.setStyle(`https://tiles.openfreemap.org/styles/${e.matches ? "dark" : "positron"}`));
+dark.addEventListener("change", e => gl.setStyle(styleUrl(e.matches), { diff: false }));
 
 let SHOPS = [], markers = {}, active = null, me = null, meMarker = null;
 
