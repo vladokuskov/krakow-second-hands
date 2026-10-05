@@ -32,11 +32,17 @@ let SHOPS = [], byId = {}, markers = {}, active = null, me = null, meMarker = nu
 const T = () => STRINGS[lang];
 const t = (k, vars = {}) => String(T()[k] ?? k).replace(/\{(\w+)\}/g, (_, v) => vars[v]);
 const catLabel = c => T().cats[c][0];
+const reviewsText = n => {
+  if (lang === "pl") return `${n} ${n === 1 ? "opinia" : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? "opinie" : "opinii"}`;
+  return `${n} ${n === 1 ? "review" : "reviews"}`;
+};
 const stopsTitle = n => {
   if (n === 1) return t("routeTitle1");
   if (lang === "pl") return `Trasa · ${n} ${n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? "sklepy" : "sklepów"}`;
   return t("routeTitle", { n });
 };
+
+["sort", "minr", "mode"].forEach(id => enhanceSelect($(id)));
 
 // ---- map
 const map = L.map("map", { minZoom: 11, maxZoom: 19 }).setView([50.0614, 19.9366], 12);
@@ -141,7 +147,7 @@ function applyLang() {
   document.querySelectorAll("[data-lang]").forEach(b => b.setAttribute("aria-pressed", b.dataset.lang === lang));
   $("q").placeholder = t("search");
   fillSelect($("sort"), [["reviews", t("sortReviews")], ["rating", t("sortRating")], ["near", t("sortNear"), !me], ["name", t("sortName")]]);
-  fillSelect($("minr"), [["0", t("anyRating")], ["4", "4.0+"], ["4.5", "4.5+"]]);
+  fillSelect($("minr"), [["0", t("anyRating")], ["4", "★ 4.0+"], ["4.5", "★ 4.5+"]]);
   fillSelect($("mode"), [["walking", t("walking")], ["transit", t("transit")], ["driving", t("driving")]]);
   $("mode").value = mode;
   buildChips();
@@ -262,7 +268,7 @@ function popupEl(s) {
   const inRoute = route.includes(s.place_id), isSaved = saved.has(s.place_id);
   const today = krakowNow().day;
   const week = s.hours ? T().daysLong.map((d, i) => `<tr${i === today ? ' class="today"' : ""}><th>${d}</th><td>${dayText(s.hours[i], t("closedDay"))}</td></tr>`).join("") : "";
-  const meta = [s.rating ? `★ ${s.rating.toFixed(1)} · ${t("reviews", { n: s.total_ratings })}` : t("noReviews")];
+  const meta = [s.rating ? `★ ${s.rating.toFixed(1)} · ${reviewsText(s.total_ratings)}` : t("noReviews")];
   if (s.cards != null) meta.push(s.cards ? t("cardsYes") : t("cardsNo"));
   el.innerHTML = `<span class="tag">${catLabel(s.cat)}</span>
     <h3>${esc(s.name)}</h3>
@@ -272,15 +278,16 @@ function popupEl(s) {
     ${s.hours && !is24(s.hours) ? `<details><summary>${t("hoursWeek")}</summary><table>${week}</table></details>` : ""}
     ${s.note ? `<p class="note">${esc(s.note)}</p>` : ""}
     ${s.delivery ? `<p class="deliv"><b>${t("deliveryReviews")}:</b> ${esc(s.delivery)}</p>` : ""}
-    <label class="mydel">${t("myDelivery")}
-      <select>${[`<option value="">${t("deliveryNone")}</option>`, ...T().daysLong.map((d, i) => `<option value="${i}"${myDel[s.place_id] === i ? " selected" : ""}>${d}</option>`)].join("")}</select>
-    </label>
+    <div class="mydel"><span>${t("myDelivery")}</span>
+      <select aria-label="${t("myDelivery")}">${[`<option value="">${t("deliveryNone")}</option>`, ...T().daysLong.map((d, i) => `<option value="${i}"${myDel[s.place_id] === i ? " selected" : ""}>${d}</option>`)].join("")}</select>
+    </div>
     <div class="acts">
       <button type="button" class="act route" aria-pressed="${inRoute}">${inRoute ? "✓ " + t("inRoute") : "+ " + t("addRoute")}</button>
       <button type="button" class="act save" aria-pressed="${isSaved}">${isSaved ? "♥ " + t("savedBtn") : "♡ " + t("save")}</button>
       <button type="button" class="act copy">${t("copyLink")}</button>
     </div>
     <div class="links"><a href="${gmaps(s)}" target="_blank" rel="noopener">${t("gmaps")} ↗</a>${s.website ? ` <a href="${esc(s.website)}" target="_blank" rel="noopener">${t("website")} ↗</a>` : ""}${s.phone ? ` <span class="phone">${esc(s.phone)}</span>` : ""}</div>`;
+  enhanceSelect(el.querySelector(".mydel select"));
   L.DomEvent.disableClickPropagation(el); // buttons re-render the popup; keep Leaflet from reading that as a map click
   el.querySelector(".route").onclick = () => toggleRoute(s.place_id);
   el.querySelector(".save").onclick = () => toggleSaved(s.place_id);

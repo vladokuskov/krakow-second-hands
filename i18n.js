@@ -1,7 +1,6 @@
 const STRINGS = {
   en: {
     title: 'Kraków <span>second hands</span>',
-    sub: "Every lumpeks, thrift, vintage and charity shop in Kraków, from Google Maps.",
     search: "Search name or street",
     filters: "Filters",
     sort: "Sort",
@@ -30,7 +29,6 @@ const STRINGS = {
     noHours: "Hours not listed",
     closedDay: "Closed",
     hoursWeek: "Opening hours",
-    reviews: "{n} reviews",
     noReviews: "No reviews yet",
     gmaps: "Google Maps",
     website: "Website",
@@ -71,7 +69,6 @@ const STRINGS = {
   },
   pl: {
     title: 'Kraków <span>second handy</span>',
-    sub: "Wszystkie lumpeksy, second handy, sklepy vintage i charytatywne w Krakowie, z Google Maps.",
     search: "Szukaj nazwy lub ulicy",
     filters: "Filtry",
     sort: "Sortuj",
@@ -100,7 +97,6 @@ const STRINGS = {
     noHours: "Brak godzin otwarcia",
     closedDay: "Zamknięte",
     hoursWeek: "Godziny otwarcia",
-    reviews: "{n} opinii",
     noReviews: "Brak opinii",
     gmaps: "Google Maps",
     website: "Strona",
