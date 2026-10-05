@@ -109,7 +109,7 @@ const refreshIcon = id => byId[id] && markers[id].setIcon(makeIcon(byId[id]));
 
 // ---- data
 $("list").innerHTML = `<li class="empty">${t("loading")}</li>`;
-fetch("/data/shops.json")
+fetch("/data/shops.json", { cache: "no-cache" })
   .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
   .then(init)
   .catch(() => { $("list").innerHTML = `<li class="empty">${t("loadFail")}</li>`; });
