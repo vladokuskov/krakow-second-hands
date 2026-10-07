@@ -4,7 +4,7 @@ Map of every second hand, lumpeks, vintage, charity shop and flea market in Krak
 
 Features: clustered map, open-now status and weekly hours (Kraków time), delivery-day notes from reviews plus your own per-shop delivery day, saved shops, a thrift route planner that opens in Google Maps, shareable links (`/?shop=<place_id>`, `/?route=<id>,<id>`), PL/EN, light/dark map that follows the system, tags for what each shop sells, and an installable offline app (service worker in `sw.js`; "Save map offline" pre-downloads ~35 MB of Kraków vector tiles).
 
-Plain static site, no build step: `index.html`, `app.js`, `hours.js`, `i18n.js`, `select.js`, `offline.js`, `sw.js`, `styles.css`, `data/shops.json`. If you change the files listed in `sw.js` `SHELL_FILES`, bump `SHELL` so old caches clear. Saved shops, route and delivery days live in the browser's localStorage.
+Plain static site, no build step: `index.html`, `app.js`, `hours.js`, `i18n.js`, `select.js`, `sheet.js`, `offline.js`, `sw.js`, `styles.css`, `data/shops.json`. If you change the files listed in `sw.js` `SHELL_FILES`, bump `SHELL` so old caches clear. Saved shops, route and delivery days live in the browser's localStorage.
 
 ## Run locally
 

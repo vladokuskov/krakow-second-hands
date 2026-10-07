@@ -87,6 +87,15 @@ dark.addEventListener("change", e => { gl.setStyle(styleUrl(e.matches), { diff: 
 
 new ResizeObserver(() => { map.invalidateSize(); gl.resize(); }).observe($("map"));
 
+// The phone sheet covers the bottom of the map: frame things in the part you can see
+const mapPad = () => ({ paddingTopLeft: [20, 20 + sheet.safeTop()], paddingBottomRight: [20, 20 + sheet.cover()] });
+function viewAt(latlng, zoom) {
+  const p = map.project(latlng, zoom).add([0, sheet.cover() / 2]);
+  map.setView(map.unproject(p, zoom), zoom, { animate: !reduceMotion });
+}
+map.on("popupopen", () => sheet.set("peek"));
+map.on("dragstart", () => { if (sheet.state === "half") sheet.set("peek"); });
+
 const cluster = L.markerClusterGroup({
   showCoverageOnHover: false,
   maxClusterRadius: 38,
@@ -122,7 +131,12 @@ function init(data) {
   SHOPS.forEach(s => {
     byId[s.place_id] = s;
     const m = L.marker([s.lat, s.lng], { icon: makeIcon(s), title: s.name });
-    m.bindPopup(() => popupEl(s), { maxWidth: 300, minWidth: 240, autoPanPaddingTopLeft: [20, 60] });
+    m.bindPopup(() => popupEl(s), { maxWidth: 300, minWidth: 240 });
+    // on phones a popup opens with the sheet at peek, so keep it clear of that and of the notch
+    Object.defineProperties(m.getPopup().options, {
+      autoPanPaddingTopLeft: { get: () => sheet.mobile() ? [12, sheet.safeTop() + 36] : [20, 60] },
+      autoPanPaddingBottomRight: { get: () => [12, sheet.peekCover() + 12] },
+    });
     m.on("click", () => select(s.place_id, false));
     m.on("popupclose", () => { if (active === s.place_id) { active = null; refreshIcon(s.place_id); markActiveRow(); setUrl(); } });
     markers[s.place_id] = m;
@@ -133,11 +147,11 @@ function init(data) {
   const sharedRoute = (p.get("route") || "").split(",").filter(id => byId[id]);
   if (sharedRoute.length) { route = sharedRoute.slice(0, MAX_STOPS); store.set("route", route); }
 
-  map.fitBounds(L.latLngBounds(SHOPS.map(s => [s.lat, s.lng])), { padding: [20, 20] });
+  map.fitBounds(L.latLngBounds(SHOPS.map(s => [s.lat, s.lng])), mapPad());
   applyLang();
   const shared = p.get("shop");
   if (byId[shared]) setTimeout(() => select(shared, true), 300);
-  else if (sharedRoute.length) map.fitBounds(L.latLngBounds(route.map(id => [byId[id].lat, byId[id].lng])).pad(0.3));
+  else if (sharedRoute.length) map.fitBounds(L.latLngBounds(route.map(id => [byId[id].lat, byId[id].lng])).pad(0.3), mapPad());
   setInterval(render, 60_000);
 }
 
@@ -147,6 +161,7 @@ function applyLang() {
   store.set("lang", lang);
   document.querySelectorAll("[data-i18n]").forEach(el => el.textContent = t(el.dataset.i18n));
   document.querySelectorAll("[data-i18n-html]").forEach(el => el.innerHTML = t(el.dataset.i18nHtml));
+  document.querySelectorAll("[data-i18n-label]").forEach(el => el.setAttribute("aria-label", t(el.dataset.i18nLabel)));
   document.querySelectorAll("[data-lang]").forEach(b => b.setAttribute("aria-pressed", b.dataset.lang === lang));
   $("q").placeholder = t("search");
   fillSelect($("sort"), [["reviews", t("sortReviews")], ["rating", t("sortRating")], ["near", t("sortNear"), !me], ["name", t("sortName")]]);
@@ -199,10 +214,12 @@ function buildChips() {
   $("filtersBtn").classList.toggle("dot", changed);
 }
 
+$("q").addEventListener("focus", () => sheet.set("full"));
 ["q", "sort", "minr"].forEach(id => $(id).addEventListener("input", () => { render(); buildChips(); }));
 document.querySelectorAll("[data-lang]").forEach(b => b.onclick = () => { lang = b.dataset.lang; applyLang(); });
 $("filtersBtn").onclick = () => {
   const open = $("filters").classList.toggle("show");
+  if (open && sheet.state === "peek") sheet.set("half");
   $("filtersBtn").setAttribute("aria-expanded", open);
 };
 
@@ -262,7 +279,7 @@ function render() {
         <div class="rt">${s.rating ? `<span class="s">★</span> ${s.rating.toFixed(1)}` : ""}<small>${d != null ? `<span class="km">${fmtKm(d)}</span>` : s.rating ? s.total_ratings : ""}</small></div>
       </button>
       <button type="button" class="add" aria-pressed="${inRoute}" title="${inRoute ? t("inRoute") : t("addRoute")}" aria-label="${inRoute ? t("inRoute") : t("addRoute")}">${inRoute ? route.indexOf(s.place_id) + 1 : "+"}</button>`;
-    li.querySelector(".main").onclick = () => select(s.place_id, true);
+    li.querySelector(".main").onclick = () => { sheet.set("peek"); select(s.place_id, true); };
     li.querySelector(".add").onclick = () => toggleRoute(s.place_id);
     list.appendChild(li);
   });
@@ -366,7 +383,7 @@ function renderRoute() {
     const s = byId[id];
     return `<li style="--dot:var(${CAT_VARS[s.cat]})"><span class="n">${i + 1}</span><button type="button" class="go" data-id="${id}">${esc(s.name)}</button><button type="button" class="x" data-id="${id}" aria-label="${t("remove")}">×</button></li>`;
   }).join("");
-  $("stops").querySelectorAll(".go").forEach(b => b.onclick = () => select(b.dataset.id, true));
+  $("stops").querySelectorAll(".go").forEach(b => b.onclick = () => { sheet.set("peek"); select(b.dataset.id, true); });
   $("stops").querySelectorAll(".x").forEach(b => b.onclick = () => toggleRoute(b.dataset.id));
   const stops = route.map(id => byId[id]);
   const ll = s => `${s.lat},${s.lng}`;
@@ -418,7 +435,7 @@ $("near").onclick = () => {
     $("sort").value = "near";
     if (meMarker) meMarker.remove();
     meMarker = L.marker([me.lat, me.lng], { icon: L.divIcon({ className: "", html: '<div class="me"></div>', iconSize: [16, 16], iconAnchor: [8, 8] }), title: "You", zIndexOffset: 1000, interactive: false }).addTo(map);
-    map.setView([me.lat, me.lng], 15, { animate: !reduceMotion });
+    viewAt([me.lat, me.lng], 15);
     render(); renderRoute();
   }, err => {
     msg.textContent = err.code === 1 ? t("locBlocked") : t("locFail");

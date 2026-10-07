@@ -1,14 +1,14 @@
 // Offline support. App files: network first (4 s timeout) with cache fallback, so updates arrive
 // but a weak basement signal still opens the app. Pinned CDN libraries: cache first.
 // Map tiles, glyphs and sprites: cache first, keyed without OpenFreeMap's dated planet version.
-const SHELL = "shell-v1";
+const SHELL = "shell-v2";
 const CDN = "cdn-v1";
 const MAP = "map-v1";
 const FONTS = "fonts-v1";
 const KEEP = [SHELL, CDN, MAP, FONTS];
 
 const SHELL_FILES = [
-  "/", "/app.js", "/hours.js", "/i18n.js", "/select.js", "/styles.css", "/data/shops.json",
+  "/", "/app.js", "/hours.js", "/i18n.js", "/select.js", "/sheet.js", "/offline.js", "/styles.css", "/data/shops.json",
   "/manifest.webmanifest", "/icons/icon-192.png", "/icons/apple-touch-icon.png",
 ];
 const CDN_FILES = [
